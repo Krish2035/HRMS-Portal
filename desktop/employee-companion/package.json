@@ -1,0 +1,16 @@
+{
+  "name": "hrms-employee-companion",
+  "version": "1.0.0",
+  "description": "Lightweight Windows System Tray Companion & Automatic Startup Agent for HRMS Enterprise",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "package": "electron-packager . HRMSCompanion --platform=win32 --arch=x64 --out=dist"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "electron": "^34.2.0"
+  }
+}

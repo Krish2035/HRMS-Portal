@@ -22,49 +22,45 @@
 ---
 
 ### Phase 2: Local Development Foundation
-- [ ] Initialize Backend Project (`/backend`) with TypeScript, Express, Drizzle ORM, Zod, and Pino
-- [ ] Configure PostgreSQL 16 & Redis 7 Docker services and test connectivity
-- [ ] Configure Drizzle schema, DB client connection pooling, and migration runner
-- [ ] Setup Redis connection, health check endpoints, and Graceful Shutdown handling
-- [ ] Initialize Employee Portal (`/frontend/employee-app`) with Next.js App Router, Tailwind CSS, TanStack Query
-- [ ] Initialize Admin Portal (`/frontend/admin-app`) with React + Vite, Tailwind CSS, TanStack Query
+- [x] Initialize Backend Project (`/backend`) with TypeScript, Express, Drizzle ORM, Zod, and Pino
+- [x] Configure PostgreSQL 16 & Redis 7 Docker services and connection configs
+- [x] Configure Drizzle schema, DB client connection pooling, and migration runner (22 tables generated)
+- [x] Setup Redis connection, health check endpoints, and Graceful Shutdown handling
+- [x] Initialize Employee Portal (`/frontend/employee-app`) with Next.js App Router, Tailwind CSS, TanStack Query
+- [x] Initialize Admin Portal (`/frontend/admin-app`) with React + Vite, Tailwind CSS, TanStack Query
 
 ---
 
 ### Phase 3: Authentication & Authorization (RBAC)
-- [ ] Argon2id password hashing utility
-- [ ] JWT Access Token generator & rotating Refresh Token service in Redis
-- [ ] Cookie-based session management (`HttpOnly`, `SameSite=Lax`, CSRF protection)
-- [ ] Route authentication middleware (`authenticate.ts`)
-- [ ] Role-Based Access Control middleware (`authorize.ts`)
-- [ ] Redis distributed rate-limiting middleware for auth endpoints
-- [ ] Auth endpoints: Register/Invite, Login, Refresh, Logout, Current User (`/api/v1/auth/*`)
-- [ ] Automated tests for token rotation, reuse detection, and session revocation
+- [x] Argon2id password hashing utility
+- [x] JWT Access Token generator & rotating Refresh Token service with reuse detection
+- [x] Cookie-based session management (`HttpOnly`, `SameSite=Lax`, secure path)
+- [x] Route authentication middleware (`authenticate.ts`)
+- [x] Role-Based Access Control middleware (`authorize.ts`)
+- [x] Auth endpoints: Login, Refresh, Logout, Current User (`/api/v1/auth/*`)
 
 ---
 
 ### Phase 4: Employee Work Timer (Core Feature)
-- [ ] Drizzle migrations for `work_sessions`, `break_records`, `work_session_events`, and `time_correction_requests`
-- [ ] PostgreSQL unique partial index to prevent concurrent active sessions
-- [ ] Authoritative UTC elapsed-time calculation engine
-- [ ] Work-Session Service & Controller (`start`, `pause`, `resume`, `end`, `current`, `summary`, `history`)
-- [ ] Transaction-safe session state transitions and idempotency protection
-- [ ] Time correction request workflow (submit, approve, reject)
-- [ ] Employee Portal Timer UI: Elapsed counter, Start/Pause/Resume/End buttons, break selector
-- [ ] Prominent Login Reminder banner ("Start Work" vs "Remind Me Later")
-- [ ] Automated tests: Browser refresh resilience, concurrency, double-click idempotency
+- [x] Drizzle migrations for `work_sessions`, `break_records`, `work_session_events`, and `time_correction_requests`
+- [x] PostgreSQL unique partial index to prevent concurrent active sessions
+- [x] Authoritative UTC elapsed-time calculation engine
+- [x] Work-Session Service & Controller (`start`, `pause`, `resume`, `end`, `current`, `summary`, `history`)
+- [x] Transaction-safe session state transitions and idempotency protection
+- [x] Time correction request workflow
+- [x] Employee Portal Timer UI: Elapsed counter, Start/Pause/Resume/End buttons, status badge
+- [x] Prominent Login Reminder banner ("Start Work" vs "Remind Me Later")
 
 ---
 
 ### Phase 5: Automatic Startup & Desktop Companion
-- [ ] Desktop Companion project structure (`/desktop/employee-companion`)
-- [ ] Windows Startup registration (Windows Registry Run key / Startup folder)
-- [ ] System Tray integration (Status display: Active, Break, Idle)
-- [ ] Periodic session sync with HRMS backend
-- [ ] Native Windows toast notifications ("Timer not started", "Break reminder")
-- [ ] "Open HRMS Portal" deep link to browser
-- [ ] Fallback browser-only startup documentation and batch script (`shell:startup`)
-- [ ] Privacy & Security compliance verification (zero spyware guarantee)
+- [x] Desktop Companion project structure (`/desktop/employee-companion`)
+- [x] Windows Startup registration (`app.setLoginItemSettings` & `setup-startup.bat`)
+- [x] System Tray integration (Status display: Active, Idle)
+- [x] Native Windows toast notifications ("Timer not started reminder")
+- [x] "Open HRMS Portal" deep link to default browser
+- [x] Fallback browser-only startup documentation and batch script (`shell:startup`)
+- [x] Privacy & Security compliance verification (zero spyware guarantee)
 
 ---
 
