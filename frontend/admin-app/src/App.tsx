@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Clock, Calendar, ShieldCheck, CheckCircle2, ChevronRight, BarChart3, Settings } from 'lucide-react';
+import { Users, Clock, Calendar, ShieldCheck, CheckCircle2, ChevronRight, BarChart3, Settings, Download, FileSpreadsheet, FileCheck } from 'lucide-react';
 
 export default function AdminApp() {
   const activeSessions = [
@@ -8,8 +8,55 @@ export default function AdminApp() {
     { id: '3', name: 'Michael Chen', dept: 'Product', start: '08:45 AM', status: 'Running', duration: '4h 02m' },
   ];
 
+  const handleExportAch = () => {
+    const csvRows = [
+      'TransactionType,EffectiveDate,OriginatingCompany,EmployeeCode,EmployeeName,RoutingNumber,AccountNumber,AccountType,AmountUSD,PaymentReference',
+      'PPD_CREDIT,2026-10-31,"HRMS Enterprise Inc.",EMP-00101,"Krish Patel",121000358,9820011000,Checking,6430.00,PAY-OCT2026-EMP-00101',
+      'PPD_CREDIT,2026-10-31,"HRMS Enterprise Inc.",EMP-00102,"Sarah Jenkins",121000358,9820011001,Checking,5820.00,PAY-OCT2026-EMP-00102',
+      'PPD_CREDIT,2026-10-31,"HRMS Enterprise Inc.",EMP-00103,"Michael Chen",121000358,9820011002,Checking,6150.00,PAY-OCT2026-EMP-00103',
+    ].join('\r\n');
+
+    const blob = new Blob([csvRows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'ACH_Direct_Deposit_October_2026.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportNacha = () => {
+    const nachaLines = [
+      '101 121000358 19876543212610310930A094101SILICON VALLEY BANK   HRMS ENTERPRISE INC    00000001',
+      '5220HRMS ENTERPRISE PAYROLL             1987654321PPDSALARY   261031261031   1121000350000001',
+      '6221210003589820011000       0000643000EMP-00101      Krish Patel             0121000350000001',
+      '822000000100121000350000000000000000006430001987654321                   121000350000001',
+      '9000001000001000000010012100035000000000000000000643000                                       ',
+    ].join('\r\n');
+
+    const blob = new Blob([nachaLines], { type: 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'NACHA_PAYROLL_OCT2026.ach';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadSamplePdf = () => {
+    const pdfData = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF";
+    const blob = new Blob([pdfData], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Sample_Payslip_October_2026.pdf';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-100">
+
       {/* Admin Sidebar */}
       <aside className="w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col justify-between">
         <div className="space-y-8">
@@ -154,8 +201,76 @@ export default function AdminApp() {
               </table>
             </div>
           </div>
+          {/* Automated Direct Deposit & PDF Payslip Disbursement Panel */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <h2 className="text-base font-bold text-white">Automated Direct Deposit & Payroll Disbursement</h2>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  1-Click batch banking export (NACHA & ACH CSV) and executive PDF voucher generation
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-lg font-semibold">
+                  Period: October 2026
+                </span>
+                <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg font-semibold">
+                  142 Records Prepared
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+                <p className="text-xs text-slate-400">Total Gross Pay</p>
+                <p className="text-xl font-bold text-white mt-1">$710,000.00</p>
+                <p className="text-xs text-slate-500 mt-1">Base + Allowances</p>
+              </div>
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+                <p className="text-xs text-slate-400">Statutory Deductions</p>
+                <p className="text-xl font-bold text-rose-400 mt-1">-$49,700.00</p>
+                <p className="text-xs text-slate-500 mt-1">Tax, Benefits & Social Security</p>
+              </div>
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+                <p className="text-xs text-slate-400">Net Direct Deposit Payout</p>
+                <p className="text-xl font-bold text-emerald-400 mt-1">$660,300.00</p>
+                <p className="text-xs text-slate-500 mt-1">ACH Batch Total</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <button
+                onClick={handleExportAch}
+                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs transition shadow-sm"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                Export ACH Corporate Direct Deposit (.csv)
+              </button>
+
+              <button
+                onClick={handleExportNacha}
+                className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl font-semibold text-xs transition"
+              >
+                <FileCheck className="w-4 h-4 text-emerald-400" />
+                Export NACHA 94-Char Batch (.ach)
+              </button>
+
+              <button
+                onClick={handleDownloadSamplePdf}
+                className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl font-semibold text-xs transition"
+              >
+                <Download className="w-4 h-4 text-sky-400" />
+                Download Sample PDF Payslip
+              </button>
+            </div>
+
+          </div>
         </main>
       </div>
     </div>
   );
 }
+

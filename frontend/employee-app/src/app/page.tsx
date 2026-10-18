@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Square, Clock, Calendar, CheckCircle2, Coffee, AlertCircle, RefreshCw, Send } from 'lucide-react';
+import { Play, Pause, Square, Clock, Calendar, CheckCircle2, Coffee, AlertCircle, RefreshCw, Send, Download, FileText } from 'lucide-react';
 import { ApiClient } from '../lib/api';
 
 export default function EmployeeDashboard() {
@@ -64,6 +64,18 @@ export default function EmployeeDashboard() {
     const s = (secs % 60).toString().padStart(2, '0');
     return `${h}:${m}:${s}`;
   };
+
+  const handleDownloadPayslipPdf = () => {
+    const samplePdfContent = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF";
+    const blob = new Blob([samplePdfContent], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Payslip-EMP-00101-October_2026.pdf';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
 
   const handleStartWork = async () => {
     setErrorMsg(null);
@@ -318,9 +330,34 @@ export default function EmployeeDashboard() {
                 <span className="text-slate-600 font-medium">Automatic</span>
               </div>
             </div>
+
+            <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-md border border-indigo-800/40">
+              <div className="flex items-center justify-between text-indigo-300 mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider">Latest Payslip</span>
+                <FileText className="w-4 h-4" />
+              </div>
+              <p className="text-2xl font-extrabold text-white mt-1">$6,430.00</p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  ● Disbursed
+                </span>
+                <span className="text-xs text-indigo-200">October 2026</span>
+              </div>
+              <div className="mt-4 pt-3 border-t border-indigo-800/60">
+                <button
+                  onClick={handleDownloadPayslipPdf}
+                  className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download PDF Voucher
+                </button>
+
+              </div>
+            </div>
           </div>
         </div>
       </main>
+
     </div>
   );
 }

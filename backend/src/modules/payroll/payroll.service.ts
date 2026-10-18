@@ -1,6 +1,6 @@
 import { eq, and, desc } from 'drizzle-orm';
 import { db } from '../../config/database';
-import { payrollPeriods, payrollRecords, employeeProfiles } from '../../db/schema';
+import { payrollPeriods, payrollRecords, employeeProfiles, organizations } from '../../db/schema';
 
 export class PayrollService {
   static async listPeriods(organizationId: string) {
@@ -112,4 +112,55 @@ export class PayrollService {
 
     return updated;
   }
+
+  static async getPayslipForPdf(payslipId: string) {
+    const [record] = await db
+      .select({
+        payslipId: payrollRecords.id,
+        baseSalary: payrollRecords.baseSalary,
+        allowances: payrollRecords.allowances,
+        deductions: payrollRecords.deductions,
+        netSalary: payrollRecords.netSalary,
+        status: payrollRecords.status,
+        paymentDate: payrollRecords.paymentDate,
+        employeeId: payrollRecords.employeeId,
+        periodName: payrollPeriods.name,
+        startDate: payrollPeriods.startDate,
+        endDate: payrollPeriods.endDate,
+        organizationId: payrollPeriods.organizationId,
+        organizationName: organizations.name,
+        employeeCode: employeeProfiles.employeeCode,
+        firstName: employeeProfiles.firstName,
+        lastName: employeeProfiles.lastName,
+        workLocation: employeeProfiles.workLocation,
+      })
+      .from(payrollRecords)
+      .innerJoin(payrollPeriods, eq(payrollRecords.payrollPeriodId, payrollPeriods.id))
+      .innerJoin(employeeProfiles, eq(payrollRecords.employeeId, employeeProfiles.id))
+      .innerJoin(organizations, eq(payrollPeriods.organizationId, organizations.id))
+      .where(eq(payrollRecords.id, payslipId))
+      .limit(1);
+
+    if (!record) return null;
+
+    return {
+      organizationName: record.organizationName,
+      periodName: record.periodName,
+      startDate: record.startDate,
+      endDate: record.endDate,
+      employeeCode: record.employeeCode,
+      employeeName: `${record.firstName} ${record.lastName}`,
+      workLocation: record.workLocation || 'Corporate Headquarters',
+      baseSalary: Number(record.baseSalary),
+      allowances: Number(record.allowances),
+      deductions: Number(record.deductions),
+      netSalary: Number(record.netSalary),
+      status: record.status,
+      paymentDate: record.paymentDate,
+      payslipId: record.payslipId,
+      employeeId: record.employeeId,
+      organizationId: record.organizationId,
+    };
+  }
 }
+
