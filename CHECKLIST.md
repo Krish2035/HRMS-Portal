@@ -65,12 +65,13 @@
 ---
 
 ### Phase 6: Core HRMS Business Modules
-- [ ] Organization & Company Settings API (working hours, holidays, policies)
-- [ ] Departments, Designations & Hierarchy Management
-- [ ] Employee Directory & Detailed Profile Management
-- [ ] Daily Attendance consolidation & rollup engine
-- [ ] Leave Types, Balances & Leave Application Workflow
-- [ ] Manager Team Dashboard & Approval workflows
+- [x] Database Seed script (`src/db/seed.ts`): Organization, Super Admin, HR Admin, Manager, Employees, Departments, Designations, Roles, Permissions, Leave Types
+- [x] Organization & Company Settings API (working hours, policies, time zones)
+- [x] Departments, Designations & Hierarchy Management
+- [x] Employee Directory & Detailed Profile Management
+- [x] Daily Attendance consolidation & rollup engine
+- [x] Leave Types, Balances & Leave Application Workflow
+- [x] Manager Team Dashboard & Approval workflows
 
 ---
 
