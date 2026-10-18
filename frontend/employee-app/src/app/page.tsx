@@ -331,11 +331,33 @@ export default function EmployeeDashboard() {
               </div>
             </div>
 
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+              <div className="flex items-center justify-between text-slate-500 mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider">Weekly Timesheet</span>
+                <Clock className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div className="flex items-baseline justify-between">
+                <p className="text-2xl font-extrabold text-slate-900">41.25 hrs</p>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                  ● Approved
+                </span>
+              </div>
+              <div className="mt-3 text-xs text-slate-500 flex items-center justify-between">
+                <span>Regular: 40.0h</span>
+                <span className="text-purple-600 font-semibold">Overtime: 1.25h</span>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <span>Week: Oct 12 – Oct 18</span>
+                <span className="text-indigo-600 font-medium">Locked for Payroll</span>
+              </div>
+            </div>
+
             <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-md border border-indigo-800/40">
               <div className="flex items-center justify-between text-indigo-300 mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider">Latest Payslip</span>
                 <FileText className="w-4 h-4" />
               </div>
+
               <p className="text-2xl font-extrabold text-white mt-1">$6,430.00</p>
               <div className="mt-2 flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">

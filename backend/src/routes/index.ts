@@ -8,6 +8,7 @@ import organizationRoutes from '../modules/organization/organization.routes';
 import payrollRoutes from '../modules/payroll/payroll.routes';
 import performanceRoutes from '../modules/performance/performance.routes';
 import auditRoutes from '../modules/audit/audit.routes';
+import timesheetRoutes from '../modules/timesheets/timesheet.routes';
 
 const router = Router();
 
@@ -20,5 +21,7 @@ router.use('/organization', organizationRoutes);
 router.use('/payroll', payrollRoutes);
 router.use('/performance', performanceRoutes);
 router.use('/audit', auditRoutes);
+router.use('/timesheets', timesheetRoutes);
 
 export default router;
+
