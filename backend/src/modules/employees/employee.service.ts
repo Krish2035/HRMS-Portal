@@ -1,7 +1,8 @@
 import { eq, and, ilike, or, desc } from 'drizzle-orm';
 import { db } from '../../config/database';
-import { employeeProfiles, users, departments, designations, employeeManagers } from '../../db/schema';
+import { employeeProfiles, users, departments, designations, employeeManagers, roles, userRoles } from '../../db/schema';
 import { CacheService } from '../../cache/cache.service';
+import { AuthService } from '../auth/auth.service';
 
 export class EmployeeService {
   /**
@@ -136,4 +137,123 @@ export class EmployeeService {
       .leftJoin(designations, eq(employeeProfiles.designationId, designations.id))
       .where(eq(employeeManagers.managerId, managerEmployeeId));
   }
+
+  /**
+   * Onboard a new employee with either Hourly or Salaried compensation
+   */
+  static async createEmployee(params: {
+    organizationId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    password?: string;
+    roleSlug?: string;
+    departmentId?: string;
+    designationId?: string;
+    joiningDate?: string;
+    employmentType?: string;
+    workLocation?: string;
+    compensationType: 'salaried' | 'hourly';
+    baseSalary?: number;
+    hourlyRate?: number;
+    overtimeRateMultiplier?: number;
+    standardWeeklyHours?: number;
+    managerId?: string;
+  }) {
+    const existing = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, params.email.toLowerCase().trim()))
+      .limit(1);
+
+    if (existing.length > 0) {
+      throw new Error('A user with this email address already exists');
+    }
+
+    const defaultPassword = params.password || 'EmployeePass@2026';
+    const passwordHash = await AuthService.hashPassword(defaultPassword);
+
+    // Generate next employee code
+    const existingEmployees = await db
+      .select({ id: employeeProfiles.id })
+      .from(employeeProfiles)
+      .where(eq(employeeProfiles.organizationId, params.organizationId));
+
+    const nextNumber = existingEmployees.length + 1;
+    const employeeCode = `EMP-${nextNumber.toString().padStart(5, '0')}`;
+
+    return await db.transaction(async (tx) => {
+      // 1. Create User
+      const [newUser] = await tx
+        .insert(users)
+        .values({
+          organizationId: params.organizationId,
+          email: params.email.toLowerCase().trim(),
+          passwordHash,
+          status: 'active',
+        })
+        .returning();
+
+
+      // 2. Fetch or assign role
+      const [roleRecord] = await tx
+        .select()
+        .from(roles)
+        .where(
+          and(
+            eq(roles.organizationId, params.organizationId),
+            eq(roles.slug, params.roleSlug || 'employee')
+          )
+        )
+        .limit(1);
+
+      if (roleRecord) {
+        await tx.insert(userRoles).values({
+          userId: newUser.id,
+          roleId: roleRecord.id,
+        });
+      }
+
+      // 3. Create Employee Profile with Compensation Structure
+      const [profile] = await tx
+        .insert(employeeProfiles)
+        .values({
+          userId: newUser.id,
+          organizationId: params.organizationId,
+          employeeCode,
+          firstName: params.firstName.trim(),
+          lastName: params.lastName.trim(),
+          departmentId: params.departmentId || null,
+          designationId: params.designationId || null,
+          joiningDate: params.joiningDate || new Date().toISOString().slice(0, 10),
+          employmentType: params.employmentType || (params.compensationType === 'hourly' ? 'contract' : 'full_time'),
+          workLocation: params.workLocation || 'office',
+          compensationType: params.compensationType,
+          baseSalary: (params.baseSalary || 0).toFixed(2),
+          hourlyRate: (params.hourlyRate || 0).toFixed(2),
+          overtimeRateMultiplier: (params.overtimeRateMultiplier || 1.50).toFixed(2),
+          standardWeeklyHours: (params.standardWeeklyHours || 40.00).toFixed(2),
+        })
+        .returning();
+
+      // 4. Link Reporting Manager if provided
+      if (params.managerId) {
+        await tx.insert(employeeManagers).values({
+          employeeId: profile.id,
+          managerId: params.managerId,
+          isPrimary: true,
+        });
+      }
+
+      return {
+        profile,
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          temporaryPassword: defaultPassword,
+        },
+      };
+    });
+  }
 }
+

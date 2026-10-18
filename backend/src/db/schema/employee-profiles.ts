@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, date, boolean, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, date, boolean, numeric, timestamp, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations';
 import { users } from './users';
 import { departments, designations } from './departments';
@@ -23,6 +23,11 @@ export const employeeProfiles = pgTable(
     joiningDate: date('joining_date').notNull(),
     employmentType: varchar('employment_type', { length: 30 }).default('full_time').notNull(), // 'full_time', 'part_time', 'contract', 'intern'
     workLocation: varchar('work_location', { length: 50 }).default('office').notNull(), // 'office', 'remote', 'hybrid'
+    compensationType: varchar('compensation_type', { length: 20 }).default('salaried').notNull(), // 'salaried', 'hourly'
+    baseSalary: numeric('base_salary', { precision: 12, scale: 2 }).default('0.00').notNull(),
+    hourlyRate: numeric('hourly_rate', { precision: 10, scale: 2 }).default('0.00').notNull(),
+    overtimeRateMultiplier: numeric('overtime_rate_multiplier', { precision: 4, scale: 2 }).default('1.50').notNull(),
+    standardWeeklyHours: numeric('standard_weekly_hours', { precision: 4, scale: 2 }).default('40.00').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
