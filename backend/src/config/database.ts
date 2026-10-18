@@ -1,11 +1,12 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import { env } from './env.js';
-import { logger } from './logger.js';
-import * as schema from '../db/schema/index.js';
+import { env } from './env';
+import { logger } from './logger';
+import * as schema from '../db/schema/index';
 
 const { Pool } = pg;
 
+// Primary Connection Pool (Writes & Transactions)
 export const pool = new Pool({
   connectionString: env.DATABASE_URL,
   max: 20,
@@ -14,10 +15,26 @@ export const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-  logger.error({ err }, 'Unexpected error on idle PostgreSQL client pool');
+  logger.error({ err }, 'Unexpected error on idle primary PostgreSQL pool');
 });
 
 export const db = drizzle(pool, { schema });
+
+// Read Replica Pool (Read-heavy reporting & analytical queries)
+const replicaConnectionString = process.env.READ_REPLICA_URL || env.DATABASE_URL;
+
+export const replicaPool = new Pool({
+  connectionString: replicaConnectionString,
+  max: 30, // Higher capacity for concurrent read reports
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+});
+
+replicaPool.on('error', (err) => {
+  logger.error({ err }, 'Unexpected error on idle replica PostgreSQL pool');
+});
+
+export const replicaDb = drizzle(replicaPool, { schema });
 
 export async function checkDatabaseConnection(): Promise<boolean> {
   try {

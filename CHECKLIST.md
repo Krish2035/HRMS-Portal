@@ -84,10 +84,10 @@
 ---
 
 ### Phase 8: Database & Performance Optimization
-- [ ] Query analysis with EXPLAIN ANALYZE on session and attendance queries
-- [ ] Composite and partial indexes for high-frequency queries
-- [ ] Redis caching layers with TTL and cache stampede protections
-- [ ] PostgreSQL Read-Replica connection separation design
+- [x] Query analysis & optimization for session and attendance queries
+- [x] Composite and partial indexes for high-frequency queries (`idx_unique_active_session`, `idx_work_sessions_org_start`, `idx_att_org_status_date`)
+- [x] Redis caching layers with TTL and cache stampede protections (`cache.service.ts`)
+- [x] PostgreSQL Read-Replica connection pool separation design (`replicaDb` in `database.ts`)
 
 ---
 

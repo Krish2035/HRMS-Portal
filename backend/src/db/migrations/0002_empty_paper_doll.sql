@@ -1,0 +1,2 @@
+CREATE INDEX "idx_work_sessions_org_start" ON "work_sessions" USING btree ("organization_id","start_time");--> statement-breakpoint
+CREATE INDEX "idx_att_org_status_date" ON "attendance_records" USING btree ("organization_id","status","attendance_date");

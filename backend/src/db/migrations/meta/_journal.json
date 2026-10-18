@@ -15,6 +15,13 @@
       "when": 1792336557559,
       "tag": "0001_right_morlocks",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792337039106,
+      "tag": "0002_empty_paper_doll",
+      "breakpoints": true
     }
   ]
 }

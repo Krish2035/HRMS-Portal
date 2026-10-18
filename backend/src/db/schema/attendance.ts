@@ -25,6 +25,7 @@ export const attendanceRecords = pgTable(
   (table) => [
     uniqueIndex('idx_att_emp_date').on(table.employeeId, table.attendanceDate),
     index('idx_att_org_date').on(table.organizationId, table.attendanceDate),
+    index('idx_att_org_status_date').on(table.organizationId, table.status, table.attendanceDate),
   ]
 );
 

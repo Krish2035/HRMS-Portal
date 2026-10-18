@@ -1,6 +1,7 @@
 import { eq, and, ilike, or, desc } from 'drizzle-orm';
 import { db } from '../../config/database';
 import { employeeProfiles, users, departments, designations, employeeManagers } from '../../db/schema';
+import { CacheService } from '../../cache/cache.service';
 
 export class EmployeeService {
   /**
@@ -15,7 +16,7 @@ export class EmployeeService {
   }) {
     const { organizationId, search, departmentId, limit = 50, offset = 0 } = params;
 
-    let query = db
+    const query = db
       .select({
         id: employeeProfiles.id,
         employeeCode: employeeProfiles.employeeCode,
@@ -56,54 +57,62 @@ export class EmployeeService {
   }
 
   /**
-   * Get employee by ID with department, designation, and reporting manager
+   * Get employee by ID with department, designation, and reporting manager (cached)
    */
   static async getEmployeeById(employeeId: string) {
-    const [profile] = await db
-      .select({
-        id: employeeProfiles.id,
-        userId: employeeProfiles.userId,
-        employeeCode: employeeProfiles.employeeCode,
-        firstName: employeeProfiles.firstName,
-        lastName: employeeProfiles.lastName,
-        phone: employeeProfiles.phone,
-        joiningDate: employeeProfiles.joiningDate,
-        employmentType: employeeProfiles.employmentType,
-        workLocation: employeeProfiles.workLocation,
-        email: users.email,
-        status: users.status,
-        departmentId: employeeProfiles.departmentId,
-        departmentName: departments.name,
-        designationId: employeeProfiles.designationId,
-        designationName: designations.name,
-      })
-      .from(employeeProfiles)
-      .innerJoin(users, eq(employeeProfiles.userId, users.id))
-      .leftJoin(departments, eq(employeeProfiles.departmentId, departments.id))
-      .leftJoin(designations, eq(employeeProfiles.designationId, designations.id))
-      .where(eq(employeeProfiles.id, employeeId))
-      .limit(1);
+    const cacheKey = `emp:${employeeId}:profile`;
 
-    if (!profile) return null;
+    return await CacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const [profile] = await db
+          .select({
+            id: employeeProfiles.id,
+            userId: employeeProfiles.userId,
+            employeeCode: employeeProfiles.employeeCode,
+            firstName: employeeProfiles.firstName,
+            lastName: employeeProfiles.lastName,
+            phone: employeeProfiles.phone,
+            joiningDate: employeeProfiles.joiningDate,
+            employmentType: employeeProfiles.employmentType,
+            workLocation: employeeProfiles.workLocation,
+            email: users.email,
+            status: users.status,
+            departmentId: employeeProfiles.departmentId,
+            departmentName: departments.name,
+            designationId: employeeProfiles.designationId,
+            designationName: designations.name,
+          })
+          .from(employeeProfiles)
+          .innerJoin(users, eq(employeeProfiles.userId, users.id))
+          .leftJoin(departments, eq(employeeProfiles.departmentId, departments.id))
+          .leftJoin(designations, eq(employeeProfiles.designationId, designations.id))
+          .where(eq(employeeProfiles.id, employeeId))
+          .limit(1);
 
-    // Fetch primary manager
-    const [managerRecord] = await db
-      .select({
-        managerId: employeeProfiles.id,
-        firstName: employeeProfiles.firstName,
-        lastName: employeeProfiles.lastName,
-        email: users.email,
-      })
-      .from(employeeManagers)
-      .innerJoin(employeeProfiles, eq(employeeManagers.managerId, employeeProfiles.id))
-      .innerJoin(users, eq(employeeProfiles.userId, users.id))
-      .where(and(eq(employeeManagers.employeeId, employeeId), eq(employeeManagers.isPrimary, true)))
-      .limit(1);
+        if (!profile) return null;
 
-    return {
-      ...profile,
-      manager: managerRecord || null,
-    };
+        // Fetch primary manager
+        const [managerRecord] = await db
+          .select({
+            managerId: employeeProfiles.id,
+            firstName: employeeProfiles.firstName,
+            lastName: employeeProfiles.lastName,
+            email: users.email,
+          })
+          .from(employeeManagers)
+          .innerJoin(employeeProfiles, eq(employeeManagers.managerId, employeeProfiles.id))
+          .innerJoin(users, eq(employeeProfiles.userId, users.id))
+          .where(and(eq(employeeManagers.employeeId, employeeId), eq(employeeManagers.isPrimary, true)))
+          .limit(1);
+
+        return {
+          ...profile,
+          manager: managerRecord || null,
+        };
+      },
+      900 // 15 mins TTL
+    );
   }
 
   /**

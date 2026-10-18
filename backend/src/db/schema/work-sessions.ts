@@ -29,6 +29,7 @@ export const workSessions = pgTable(
     index('idx_work_sessions_employee').on(table.employeeId),
     index('idx_work_sessions_status').on(table.status),
     index('idx_work_sessions_start_time').on(table.startTime),
+    index('idx_work_sessions_org_start').on(table.organizationId, table.startTime),
     // CRITICAL: Prevent concurrent active sessions for any employee
     uniqueIndex('idx_unique_active_session')
       .on(table.employeeId)
