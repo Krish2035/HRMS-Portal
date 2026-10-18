@@ -6,10 +6,15 @@ import { securityHeaders, corsMiddleware } from './middleware/security-headers';
 import { errorHandler } from './middleware/error-handler';
 import { checkDatabaseConnection } from './config/database';
 import { checkRedisConnection } from './config/redis';
+import { metricsMiddleware, getMetricsHandler } from './observability/metrics';
+import scimRoutes from './modules/sso/scim.routes';
 import routes from './routes/index';
 
 export function createApp(): Express {
   const app = express();
+
+  // Observability & Telemetry Middleware (measures latency & status codes)
+  app.use(metricsMiddleware);
 
   // Security & standard middlewares
   app.use(requestId);
@@ -18,6 +23,12 @@ export function createApp(): Express {
   app.use(cookieParser(env.COOKIE_SECRET));
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  // Prometheus Metrics Scraping Endpoint
+  app.get('/metrics', getMetricsHandler);
+
+  // SCIM 2.0 Enterprise Directory Synchronization (Okta / Azure AD)
+  app.use('/scim/v2', scimRoutes);
 
   // Kubernetes / Docker Health Checks
   app.get('/health/liveness', (req: Request, res: Response) => {
@@ -54,6 +65,7 @@ export function createApp(): Express {
 
   // Mount API modular routes
   app.use(`/api/${env.API_VERSION}`, routes);
+
 
   // 404 Handler
   app.use((req: Request, res: Response) => {

@@ -397,7 +397,8 @@ export default function AdminApp() {
               </button>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-300">
                 <thead className="bg-slate-950/60 text-xs text-slate-400 uppercase border-b border-slate-800">
                   <tr>
@@ -450,6 +451,33 @@ export default function AdminApp() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Adaptive Card View (<768px) */}
+            <div className="md:hidden space-y-3 mt-4">
+              {activeSessions.map((session) => (
+                <div key={session.id} className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-white text-sm">{session.name}</h4>
+                      <p className="text-xs text-slate-400">{session.dept}</p>
+                    </div>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                        session.status === 'Running'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                      }`}
+                    >
+                      ● {session.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs">
+                    <span className="text-slate-400">Duration: <strong className="text-indigo-400 font-mono">{session.duration}</strong></span>
+                    <span className="text-slate-400">Model: <strong className="text-slate-200">{session.rateDetails}</strong></span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Manager Timesheet Approval Gate (Weekly Review) */}
@@ -474,7 +502,8 @@ export default function AdminApp() {
               </div>
             </div>
 
-            <div className="overflow-x-auto mt-4">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto mt-4">
               <table className="w-full text-left text-sm text-slate-300">
                 <thead className="bg-slate-950/60 text-xs text-slate-400 uppercase border-b border-slate-800">
                   <tr>
@@ -548,6 +577,61 @@ export default function AdminApp() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Adaptive Timesheets Card View (<768px) */}
+            <div className="md:hidden space-y-3 mt-4">
+              {pendingTimesheets.map((ts) => (
+                <div key={ts.id} className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-white text-sm">{ts.employeeName}</h4>
+                      <p className="text-xs text-slate-400">{ts.department} • {ts.week}</p>
+                    </div>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                        ts.status === 'approved'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : ts.status === 'rejected'
+                          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                      }`}
+                    >
+                      {ts.status === 'approved' ? '● Approved' : ts.status === 'rejected' ? '● Rejected' : '● Pending'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 py-2 border-t border-b border-slate-800/60 text-xs">
+                    <div>
+                      <span className="text-slate-400">Total Hours:</span>
+                      <p className="font-mono font-bold text-white mt-0.5">{ts.totalHours.toFixed(1)}h <span className="text-[10px] text-purple-400">({ts.overtimeHours.toFixed(1)}h OT)</span></p>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Estimated Gross:</span>
+                      <p className="font-mono font-bold text-emerald-400 mt-0.5">${ts.estimatedGross.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                    </div>
+                  </div>
+                  {ts.status === 'submitted' ? (
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        onClick={() => handleApproveTimesheet(ts.id, ts.employeeName)}
+                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleRejectTimesheet(ts.id, ts.employeeName)}
+                        className="flex-1 py-2 bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition"
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        Reject
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center text-xs text-slate-500 italic py-1">Locked & Processed for Payroll</div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 

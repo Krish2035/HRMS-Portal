@@ -232,8 +232,14 @@ export default function EmployeeDashboard() {
                 </div>
               </div>
 
-              {/* Huge Timer Display */}
-              <div className="my-8 text-center py-8 bg-slate-50 rounded-2xl border border-slate-100">
+              {/* Huge Timer Display with WCAG 2.1 AA Screen Reader Telemetry */}
+              <div 
+                className="my-8 text-center py-8 bg-slate-50 rounded-2xl border border-slate-100"
+                role="timer"
+                aria-live="polite"
+                aria-atomic="true"
+                aria-label={`Elapsed work time: ${formatTime(elapsedSeconds)}`}
+              >
                 <span className="text-6xl md:text-7xl font-extrabold tracking-tight text-slate-900 font-mono">
                   {formatTime(elapsedSeconds)}
                 </span>
@@ -248,7 +254,8 @@ export default function EmployeeDashboard() {
               {timerState === 'NOT_STARTED' && (
                 <button
                   onClick={handleStartWork}
-                  className="flex-1 py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-base shadow-lg shadow-indigo-200 transition flex items-center justify-center gap-2"
+                  aria-label="Start active work session"
+                  className="flex-1 py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 focus-visible:ring-4 focus-visible:ring-indigo-300 outline-none text-white font-bold text-base shadow-lg shadow-indigo-200 transition flex items-center justify-center gap-2"
                 >
                   <Play className="w-5 h-5 fill-white" />
                   Start Work Now
@@ -258,18 +265,20 @@ export default function EmployeeDashboard() {
               {timerState === 'RUNNING' && (
                 <>
                   <button
-                    onClick={handlePauseWork}
-                    className="flex-1 py-3.5 px-6 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-base shadow-lg shadow-amber-200 transition flex items-center justify-center gap-2"
+                    onClick={handleTakeBreak}
+                    aria-label="Pause session for break"
+                    className="flex-1 py-3.5 px-6 rounded-2xl bg-amber-500 hover:bg-amber-600 focus-visible:ring-4 focus-visible:ring-amber-200 outline-none text-white font-bold text-base shadow-lg shadow-amber-100 transition flex items-center justify-center gap-2"
                   >
-                    <Coffee className="w-5 h-5" />
-                    Take a Break
+                    <Pause className="w-5 h-5 fill-white" />
+                    Take Break
                   </button>
                   <button
                     onClick={handleEndWork}
-                    className="flex-1 py-3.5 px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-base shadow-lg shadow-rose-200 transition flex items-center justify-center gap-2"
+                    aria-label="End work shift and lock hours"
+                    className="flex-1 py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-black focus-visible:ring-4 focus-visible:ring-slate-400 outline-none text-white font-bold text-base shadow-lg shadow-slate-300 transition flex items-center justify-center gap-2"
                   >
                     <Square className="w-5 h-5 fill-white" />
-                    End Work Shift
+                    End Shift
                   </button>
                 </>
               )}
@@ -277,7 +286,8 @@ export default function EmployeeDashboard() {
               {timerState === 'ON_BREAK' && (
                 <button
                   onClick={handleResumeWork}
-                  className="flex-1 py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-lg shadow-emerald-200 transition flex items-center justify-center gap-2"
+                  aria-label="Resume active work session"
+                  className="flex-1 py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 focus-visible:ring-4 focus-visible:ring-emerald-200 outline-none text-white font-bold text-base shadow-lg shadow-emerald-100 transition flex items-center justify-center gap-2"
                 >
                   <Play className="w-5 h-5 fill-white" />
                   Resume Work
