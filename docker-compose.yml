@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Authoritative Relational Database: PostgreSQL 16
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: hrms_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hrms_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_dev_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-hrms_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hrms_network
+
+  # ============================================================================
+  # Distributed Cache, Sessions, & Queues: Redis 7
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: hrms_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ""
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hrms_network
+
+  # ============================================================================
+  # Backend API (Node.js 22+, Express, Drizzle ORM, BullMQ)
+  # ============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hrms_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 5000
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-hrms_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_dev_password}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_dev_password}@postgres:5432/${POSTGRES_DB:-hrms_db}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev_jwt_access_secret_minimum_32_characters_random_string_hrms_2026}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_jwt_refresh_secret_minimum_32_characters_random_string_hrms_2026}
+      CORS_ORIGIN: http://localhost:3000,http://localhost:5173
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - hrms_network
+
+  # ============================================================================
+  # Employee Portal (Next.js App Router)
+  # ============================================================================
+  employee-portal:
+    build:
+      context: ./frontend/employee-app
+      dockerfile: Dockerfile
+    container_name: hrms_employee_portal
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/employee-app:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - hrms_network
+
+  # ============================================================================
+  # Admin Portal (React + Vite)
+  # ============================================================================
+  admin-portal:
+    build:
+      context: ./frontend/admin-app
+      dockerfile: Dockerfile
+    container_name: hrms_admin_portal
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:5000/api/v1
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/admin-app:/app
+      - /app/node_modules
+    networks:
+      - hrms_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  hrms_network:
+    driver: bridge
