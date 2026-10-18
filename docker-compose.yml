@@ -124,6 +124,24 @@ services:
     networks:
       - hrms_network
 
+  # ============================================================================
+  # Reverse Proxy & API Gateway (NGINX Load Balancer)
+  # ============================================================================
+  gateway:
+    image: nginx:alpine
+    container_name: hrms_gateway
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - employee-portal
+      - admin-portal
+    ports:
+      - "80:80"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - hrms_network
+
 volumes:
   postgres_data:
     driver: local
@@ -133,3 +151,4 @@ volumes:
 networks:
   hrms_network:
     driver: bridge
+

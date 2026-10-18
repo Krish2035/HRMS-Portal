@@ -1,0 +1,98 @@
+# ==============================================================================
+# Employee Portal Deployment & Service
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hrms-employee-portal
+  namespace: hrms-portal
+  labels:
+    app: hrms-employee-portal
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hrms-employee-portal
+  template:
+    metadata:
+      labels:
+        app: hrms-employee-portal
+    spec:
+      containers:
+        - name: employee-portal
+          image: hrms-employee-portal:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: NODE_ENV
+              value: "production"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee-portal-service
+  namespace: hrms-portal
+spec:
+  type: ClusterIP
+  selector:
+    app: hrms-employee-portal
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+# ==============================================================================
+# Admin Portal Deployment & Service
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hrms-admin-portal
+  namespace: hrms-portal
+  labels:
+    app: hrms-admin-portal
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hrms-admin-portal
+  template:
+    metadata:
+      labels:
+        app: hrms-admin-portal
+    spec:
+      containers:
+        - name: admin-portal
+          image: hrms-admin-portal:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-portal-service
+  namespace: hrms-portal
+spec:
+  type: ClusterIP
+  selector:
+    app: hrms-admin-portal
+  ports:
+    - port: 80
+      targetPort: 80
