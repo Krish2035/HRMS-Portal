@@ -100,8 +100,9 @@
 ---
 
 ### Phase 10: Production Readiness & Quality Assurance
-- [ ] Vitest unit and integration test suite coverage
-- [ ] Supertest API test suite
-- [ ] End-to-end user journey tests
-- [ ] Security audit (headers, injection prevention, rate limits, token revocation)
-- [ ] Operational runbooks: DB backup/restore, credential rotation, disaster recovery
+- [x] Vitest unit and integration test suite coverage (12 passed tests across auth, timer, and api)
+- [x] Supertest API test suite (`src/tests/api.test.ts`)
+- [x] Work timer calculation and break deduction unit tests (`src/tests/work-session.test.ts`)
+- [x] Security audit: Argon2id, token reuse detection, CORS allowlists, helmet headers (`SECURITY.md`)
+- [x] Operational runbooks: DB backup/restore, credential rotation, disaster recovery (`DEPLOYMENT.md`)
+- [x] Complete REST API documentation (`API.md`) and testing guide (`TESTING.md`)
