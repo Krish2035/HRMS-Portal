@@ -7,4 +7,5 @@ export * from './work-sessions';
 export * from './attendance';
 export * from './leaves';
 export * from './payroll';
+export * from './performance';
 export * from './audit-logs';

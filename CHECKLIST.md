@@ -76,10 +76,10 @@
 ---
 
 ### Phase 7: Advanced Business Modules
-- [ ] Payroll Preparation: Salary structures, allowances, deductions, and payslip generation
-- [ ] Performance Reviews & Employee KPI / Goal tracking
-- [ ] BullMQ asynchronous background jobs & scheduled notifications
-- [ ] Comprehensive Audit Logging for HR compliance
+- [x] Payroll Preparation: Salary structures, allowances, deductions, and payslip generation
+- [x] Performance Reviews & Employee KPI / Goal tracking
+- [x] BullMQ asynchronous background jobs & scheduled notifications (`queue.service.ts`)
+- [x] Comprehensive Audit Logging for HR compliance
 
 ---
 
