@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. PostgreSQL 16 Production Database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: hrms_prod_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hrms_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMeInProduction_StrongPassword123!}
+      POSTGRES_DB: ${POSTGRES_DB:-hrms_production}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hrms_admin} -d ${POSTGRES_DB:-hrms_production}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hrms_internal
+
+  # ---------------------------------------------------------------------------
+  # 2. Redis 7 Production Cache & Distributed Queue
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: hrms_prod_redis
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-RedisSecurePass123!}
+    volumes:
+      - redis_prod_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-RedisSecurePass123!}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hrms_internal
+
+  # ---------------------------------------------------------------------------
+  # 3. Enterprise Backend Node (Stateless, Scale Ready)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hrms_prod_backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hrms_admin}:${POSTGRES_PASSWORD:-ChangeMeInProduction_StrongPassword123!}@postgres:5432/${POSTGRES_DB:-hrms_production}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-RedisSecurePass123!}@redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-ProductionAccessSecretKeyMinimum32CharsLength!}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-ProductionRefreshSecretKeyMinimum32CharsLength!}
+      COOKIE_SECRET: ${COOKIE_SECRET:-ProductionCookieSecretKeyMinimum32CharsLength!}
+      SMTP_HOST: ${SMTP_HOST:-smtp.sendgrid.net}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-apikey}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-"HRMS Enterprise" <noreply@yourdomain.com>}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hrms_internal
+
+  # ---------------------------------------------------------------------------
+  # 4. Employee Portal (Next.js 15 App Router)
+  # ---------------------------------------------------------------------------
+  employee-portal:
+    build:
+      context: ./frontend/employee-app
+      dockerfile: Dockerfile
+    container_name: hrms_prod_employee_portal
+    restart: always
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: https://${DOMAIN_NAME:-hrms.yourdomain.com}/api/v1
+    networks:
+      - hrms_internal
+
+  # ---------------------------------------------------------------------------
+  # 5. Admin & HR Portal (React + Vite)
+  # ---------------------------------------------------------------------------
+  admin-portal:
+    build:
+      context: ./frontend/admin-app
+      dockerfile: Dockerfile
+    container_name: hrms_prod_admin_portal
+    restart: always
+    networks:
+      - hrms_internal
+
+  # ---------------------------------------------------------------------------
+  # 6. NGINX Reverse Proxy & SSL Gateway (Port 80 + 443)
+  # ---------------------------------------------------------------------------
+  nginx-gateway:
+    image: nginx:alpine
+    container_name: hrms_prod_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - certbot_etc:/etc/letsencrypt
+      - certbot_var:/var/lib/letsencrypt
+      - certbot_challenge:/var/www/certbot
+    depends_on:
+      - backend
+      - employee-portal
+      - admin-portal
+    networks:
+      - hrms_internal
+      - hrms_external
+
+  # ---------------------------------------------------------------------------
+  # 7. Automated Let's Encrypt SSL Certbot
+  # ---------------------------------------------------------------------------
+  certbot:
+    image: certbot/certbot
+    container_name: hrms_prod_certbot
+    volumes:
+      - certbot_etc:/etc/letsencrypt
+      - certbot_var:/var/lib/letsencrypt
+      - certbot_challenge:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - hrms_external
+
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+  certbot_etc:
+  certbot_var:
+  certbot_challenge:
+
+networks:
+  hrms_internal:
+    internal: true
+  hrms_external:

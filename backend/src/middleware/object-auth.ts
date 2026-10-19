@@ -10,6 +10,7 @@ import {
   attendanceRecords,
 } from '../db/schema';
 import { AuditService } from '../modules/audit/audit.service';
+import { SseService } from '../modules/realtime/sse.service';
 
 export type ProtectedResource =
   | 'work_sessions'
@@ -132,6 +133,15 @@ export function protectIdorAndRola(options: IdorRolaOptions) {
             userOrgId: user.organizationId,
             path: req.originalUrl,
           },
+        });
+
+        // Realtime SSE push to Admin Security Console
+        SseService.broadcastToOrganization(user.organizationId, 'SECURITY_ALERT', {
+          type: 'IDOR_VIOLATION_INTERCEPTED',
+          actorId: user.userId,
+          resource,
+          targetId,
+          timestamp: new Date().toISOString(),
         });
 
         res.status(403).json({

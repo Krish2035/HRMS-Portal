@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   OrgScale,
   EnabledModules,
@@ -210,6 +210,46 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setNotification(msg);
     setTimeout(() => setNotification(null), 4000);
   };
+
+  // Connect to Real-time Server-Sent Events (SSE) Stream
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+    try {
+      const apiBase =
+        (typeof import.meta !== 'undefined' &&
+          (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_URL) ||
+        'http://localhost:5000';
+      const sseUrl = `${apiBase}/api/v1/realtime/events`;
+      eventSource = new EventSource(sseUrl, { withCredentials: true });
+
+      eventSource.addEventListener('PRESENCE_UPDATE', (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          showToast(`⚡ Realtime Presence: ${payload.employeeName || 'Team member'} is now ${payload.status}`);
+        } catch {}
+      });
+
+      eventSource.addEventListener('SECURITY_ALERT', (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          showToast(`🚨 Security Alert: Intercepted ${payload.type} on ${payload.resource}`);
+        } catch {}
+      });
+
+      eventSource.addEventListener('LEAVE_STATUS_CHANGED', (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          showToast(`🏖️ Realtime Leave Update: ${payload.employeeName} (${payload.status})`);
+        } catch {}
+      });
+    } catch {
+      // Offline fallback
+    }
+
+    return () => {
+      if (eventSource) eventSource.close();
+    };
+  }, []);
 
   const applyScalePreset = (scale: OrgScale) => {
     setOrgScale(scale);
