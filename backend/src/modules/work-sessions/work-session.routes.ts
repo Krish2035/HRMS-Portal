@@ -8,6 +8,7 @@ import {
 } from './work-session.controller';
 import { authenticate } from '../../middleware/authenticate';
 import { validate } from '../../middleware/validate';
+import { protectIdorAndRola } from '../../middleware/object-auth';
 
 const router = Router();
 
@@ -19,11 +20,26 @@ router.get('/current', WorkSessionController.current);
 router.get('/summary', WorkSessionController.summary);
 router.get('/history', WorkSessionController.history);
 
-router.post('/:sessionId/pause', validate(pauseSessionSchema), WorkSessionController.pause);
-router.post('/:sessionId/resume', WorkSessionController.resume);
-router.post('/:sessionId/end', validate(endSessionSchema), WorkSessionController.end);
+router.post(
+  '/:sessionId/pause',
+  protectIdorAndRola({ resource: 'work_sessions', idParam: 'sessionId' }),
+  validate(pauseSessionSchema),
+  WorkSessionController.pause
+);
+router.post(
+  '/:sessionId/resume',
+  protectIdorAndRola({ resource: 'work_sessions', idParam: 'sessionId' }),
+  WorkSessionController.resume
+);
+router.post(
+  '/:sessionId/end',
+  protectIdorAndRola({ resource: 'work_sessions', idParam: 'sessionId' }),
+  validate(endSessionSchema),
+  WorkSessionController.end
+);
 router.post(
   '/:sessionId/correction-requests',
+  protectIdorAndRola({ resource: 'work_sessions', idParam: 'sessionId' }),
   validate(correctionRequestSchema),
   WorkSessionController.submitCorrection
 );

@@ -3,6 +3,7 @@ import { LeaveController, submitLeaveSchema, reviewLeaveSchema } from './leave.c
 import { authenticate } from '../../middleware/authenticate';
 import { authorize } from '../../middleware/authorize';
 import { validate } from '../../middleware/validate';
+import { protectIdorAndRola } from '../../middleware/object-auth';
 
 const router = Router();
 
@@ -15,6 +16,12 @@ router.get('/requests', LeaveController.list);
 router.patch(
   '/requests/:id/review',
   authorize(['super_admin', 'hr_admin', 'manager']),
+  protectIdorAndRola({
+    resource: 'leave_requests',
+    idParam: 'id',
+    allowRoles: ['super_admin', 'hr_admin'],
+    checkManagerRelationship: true,
+  }),
   validate(reviewLeaveSchema),
   LeaveController.review
 );

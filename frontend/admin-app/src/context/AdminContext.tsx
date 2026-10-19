@@ -179,7 +179,25 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       action: 'APPROVE_TIMESHEET',
       details: 'Timesheet locked for payroll disbursement (ID: ts-1)',
       ip: '10.0.4.1',
+      severity: 'info',
+    },
+    {
+      id: 'aud-4',
+      timestamp: 'Yesterday at 15:10:45 UTC',
+      actor: 'External Origin (IP: 198.51.100.22)',
+      action: 'SECURITY_ALERT:IDOR_CROSS_TENANT_BLOCKED',
+      details: 'Anti-IDOR Shield: Attempted direct object reference across tenant boundary was intercepted and rejected',
+      ip: '198.51.100.22',
       severity: 'security',
+    },
+    {
+      id: 'aud-5',
+      timestamp: 'Yesterday at 14:02:11 UTC',
+      actor: 'Manager (Design Dept)',
+      action: 'SECURITY_ALERT:ROLA_UNAUTHORIZED_OBJECT_BLOCKED',
+      details: 'ROLA Engine: Non-designated manager attempted leave review for unassigned employee outside reporting chain',
+      ip: '192.168.1.88',
+      severity: 'warning',
     },
   ]);
 
