@@ -23,8 +23,8 @@ async function bootstrap() {
   }
 
   const app = createApp();
-  const server = app.listen(env.PORT, () => {
-    logger.info(`🚀 HRMS Backend Server running on http://localhost:${env.PORT}`);
+  const server = app.listen(env.PORT, '0.0.0.0', () => {
+    logger.info(`🚀 HRMS Backend Server running on http://0.0.0.0:${env.PORT}`);
     logger.info(`Health check available at http://localhost:${env.PORT}/health/readiness`);
   });
 
