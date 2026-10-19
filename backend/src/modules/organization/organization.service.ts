@@ -4,6 +4,36 @@ import { organizations, departments, designations, users, roles, userRoles, empl
 import { CacheService } from '../../cache/cache.service';
 import { AuthService } from '../auth/auth.service';
 
+export const SCALE_MODULE_PRESETS = {
+  micro: {
+    time_tracking: true,
+    attendance: true,
+    leaves: true,
+    timesheets: false,
+    payroll: false,
+    performance: false,
+    audit: false,
+  },
+  growing: {
+    time_tracking: true,
+    attendance: true,
+    leaves: true,
+    timesheets: true,
+    payroll: true,
+    performance: false,
+    audit: false,
+  },
+  enterprise: {
+    time_tracking: true,
+    attendance: true,
+    leaves: true,
+    timesheets: true,
+    payroll: true,
+    performance: true,
+    audit: true,
+  },
+};
+
 export class OrganizationService {
   /**
    * Self-service organization onboarding with Super Admin creation and default setup
@@ -14,6 +44,8 @@ export class OrganizationService {
     adminEmail: string;
     password: string;
     timeZone?: string;
+    organizationScale?: 'micro' | 'growing' | 'enterprise';
+    enabledModules?: Partial<typeof SCALE_MODULE_PRESETS.growing>;
   }) {
     const existingUser = await db
       .select({ id: users.id })
@@ -28,6 +60,9 @@ export class OrganizationService {
     const baseCode = params.companyName.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'COMPANY';
     const randomSuffix = Math.floor(100 + Math.random() * 900);
     const orgCode = `${baseCode}-${randomSuffix}`;
+    const scale = params.organizationScale || 'growing';
+    const defaultModules = SCALE_MODULE_PRESETS[scale] || SCALE_MODULE_PRESETS.growing;
+    const finalModules = { ...defaultModules, ...(params.enabledModules || {}) };
 
     return await db.transaction(async (tx) => {
       // 1. Create Organization
@@ -37,6 +72,8 @@ export class OrganizationService {
           name: params.companyName.trim(),
           code: orgCode,
           timeZone: params.timeZone || 'UTC',
+          organizationScale: scale,
+          enabledModules: finalModules,
           workDayHours: '8.00',
           allowBreaks: true,
           maxBreakMinutes: 60,
@@ -205,14 +242,22 @@ export class OrganizationService {
       workDayHours?: string;
       allowBreaks?: boolean;
       maxBreakMinutes?: number;
+      organizationScale?: string;
+      enabledModules?: typeof SCALE_MODULE_PRESETS.growing;
     }
   ) {
+    const updatePayload: Record<string, unknown> = {
+      ...params,
+      updatedAt: new Date(),
+    };
+
+    if (params.enabledModules) {
+      updatePayload.enabledModules = params.enabledModules;
+    }
+
     const [updated] = await db
       .update(organizations)
-      .set({
-        ...params,
-        updatedAt: new Date(),
-      })
+      .set(updatePayload)
       .where(eq(organizations.id, organizationId))
       .returning();
 

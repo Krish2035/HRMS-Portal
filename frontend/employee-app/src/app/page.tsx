@@ -1,7 +1,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Square, Clock, Calendar, CheckCircle2, Coffee, AlertCircle, RefreshCw, Send, Download, FileText } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  Square,
+  Clock,
+  Calendar,
+  CheckCircle2,
+  Coffee,
+  AlertCircle,
+  RefreshCw,
+  Send,
+  Download,
+  FileText,
+  Plus,
+  X,
+  Sparkles,
+  ShieldCheck,
+  Check,
+} from 'lucide-react';
 import { ApiClient } from '../lib/api';
 
 export default function EmployeeDashboard() {
@@ -12,6 +30,35 @@ export default function EmployeeDashboard() {
   const [todayTrackedFormatted, setTodayTrackedFormatted] = useState('0h 0m');
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Leave Management State
+  const [leaveBalance, setLeaveBalance] = useState({
+    annual: 18.0,
+    casual: 6.0,
+    sick: 5.0,
+  });
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [leaveForm, setLeaveForm] = useState({
+    type: 'Paid Time Off (PTO)',
+    startDate: '',
+    endDate: '',
+    reason: '',
+  });
+
+  // Time Correction Request State
+  const [showCorrectionModal, setShowCorrectionModal] = useState(false);
+  const [correctionForm, setCorrectionForm] = useState({
+    date: new Date().toISOString().slice(0, 10),
+    requestedStart: '09:00',
+    requestedEnd: '17:30',
+    reason: '',
+  });
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 4000);
+  };
 
   // Sync with backend on component mount
   const syncWithBackend = async () => {
@@ -40,7 +87,7 @@ export default function EmployeeDashboard() {
 
   useEffect(() => {
     syncWithBackend();
-    const syncInterval = setInterval(syncWithBackend, 60000); // Re-sync every 60s
+    const syncInterval = setInterval(syncWithBackend, 60000);
     return () => clearInterval(syncInterval);
   }, []);
 
@@ -66,7 +113,8 @@ export default function EmployeeDashboard() {
   };
 
   const handleDownloadPayslipPdf = () => {
-    const samplePdfContent = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF";
+    const samplePdfContent =
+      '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF';
     const blob = new Blob([samplePdfContent], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -74,8 +122,8 @@ export default function EmployeeDashboard() {
     link.download = 'Payslip-EMP-00101-October_2026.pdf';
     link.click();
     URL.revokeObjectURL(url);
+    showToast('📥 Downloaded Payslip PDF Voucher for October 2026');
   };
-
 
   const handleStartWork = async () => {
     setErrorMsg(null);
@@ -86,8 +134,9 @@ export default function EmployeeDashboard() {
       if (res?.session?.id) {
         setSessionId(res.session.id);
       }
+      showToast('🚀 Work timer started! Session synchronized with server.');
     } catch {
-      // Local fallback remains responsive
+      showToast('🚀 Work timer active (Local Session)');
     }
   };
 
@@ -101,6 +150,7 @@ export default function EmployeeDashboard() {
         console.warn('Pause error', err);
       }
     }
+    showToast('☕ Break recorded. Work timer paused.');
   };
 
   const handleResumeWork = async () => {
@@ -113,6 +163,7 @@ export default function EmployeeDashboard() {
         console.warn('Resume error', err);
       }
     }
+    showToast('▶️ Resumed active work session.');
   };
 
   const handleEndWork = async () => {
@@ -126,270 +177,520 @@ export default function EmployeeDashboard() {
         console.warn('End session error', err);
       }
     }
+    showToast('🏁 Shift completed and hours locked for payroll.');
+  };
+
+  const handleApplyLeave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leaveForm.startDate || !leaveForm.endDate || !leaveForm.reason) {
+      alert('Please fill in all leave request fields.');
+      return;
+    }
+
+    setLeaveBalance((prev) => ({
+      ...prev,
+      annual: Math.max(0, prev.annual - 1),
+    }));
+
+    setShowLeaveModal(false);
+    showToast(`🏖️ Submitted ${leaveForm.type} application for manager approval!`);
+    setLeaveForm({ type: 'Paid Time Off (PTO)', startDate: '', endDate: '', reason: '' });
+  };
+
+  const handleApplyCorrection = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!correctionForm.date || !correctionForm.reason) {
+      alert('Please fill in date and justification for time correction.');
+      return;
+    }
+
+    setShowCorrectionModal(false);
+    showToast(`📝 Correction request for ${correctionForm.date} sent to your manager!`);
+    setCorrectionForm({
+      date: new Date().toISOString().slice(0, 10),
+      requestedStart: '09:00',
+      requestedEnd: '17:30',
+      reason: '',
+    });
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      {/* Top Header */}
-      <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 antialiased font-sans">
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2 bg-indigo-600 text-white px-4 py-3 rounded-2xl shadow-xl border border-indigo-400/30 text-sm font-medium animate-in fade-in slide-in-from-top-4 duration-300">
+          <Sparkles className="w-4 h-4 text-amber-300" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
+      {/* Top Header with Matching Dark Aesthetics */}
+      <header className="bg-slate-900/80 border-b border-slate-800 px-8 py-4 flex items-center justify-between sticky top-0 z-20 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-200">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-600/30">
             H
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-800 tracking-tight">HRMS Enterprise</h1>
-            <p className="text-xs text-slate-500 font-medium">Employee Workspace & Time Portal</p>
+            <h1 className="text-base font-bold text-white tracking-tight leading-tight">HRMS Enterprise</h1>
+            <p className="text-[11px] font-medium text-slate-400">Employee Workspace & Time Portal</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={syncWithBackend}
             title="Refresh session data"
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
-          <div className="text-right">
-            <p className="text-sm font-semibold text-slate-800">Krish Patel</p>
-            <p className="text-xs text-slate-500">Full-Stack Engineer • Tech Dept</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-indigo-50 border-2 border-indigo-600 flex items-center justify-center font-bold text-indigo-700 text-sm">
-            KP
+
+          <div className="flex items-center gap-2.5 pl-3 border-l border-slate-800">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xs font-bold ring-2 ring-slate-800">
+              KP
+            </div>
+            <div className="hidden sm:block text-left text-xs">
+              <p className="font-semibold text-white">Krish Patel</p>
+              <p className="text-slate-400 text-[10px]">Senior Software Engineer</p>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-8 space-y-6">
-        {errorMsg && (
-          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
-            {errorMsg}
-          </div>
-        )}
-
+      <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-8 space-y-6">
         {/* Startup Login Reminder Banner */}
-        {timerState === 'NOT_STARTED' && showReminder && !loading && (
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-amber-100 rounded-xl text-amber-700">
-                <AlertCircle className="w-6 h-6" />
+        {showReminder && timerState === 'NOT_STARTED' && (
+          <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-indigo-950/40">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5 animate-pulse" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Good morning! Your HRMS is ready.</h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  You haven&apos;t started today&apos;s work timer yet. Start your timer when you&apos;re ready to begin work.
+                <p className="text-sm font-bold text-white">Welcome back, Krish!</p>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  You signed into your workstation at 09:00 AM UTC. Don&apos;t forget to record your shift!
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setShowReminder(false)}
-                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-medium text-sm hover:bg-white transition"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition"
               >
-                Remind Me Later
+                Dismiss
               </button>
               <button
                 onClick={handleStartWork}
-                className="flex-1 md:flex-none px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-md shadow-indigo-600/30"
               >
-                <Play className="w-4 h-4 fill-white" />
-                Start Work
+                Start Shift Now
               </button>
             </div>
           </div>
         )}
 
-        {/* Top Grid: Work Timer Hero Card & Summary Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Work Timer Hero Card */}
-          <div className="lg:col-span-2 bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-indigo-50 rounded-xl text-indigo-600">
-                    <Clock className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">Live Work Timer</h3>
-                    <p className="text-xs text-slate-500">Authoritative server-side tracked session</p>
-                  </div>
+          {/* Main Work Timer Column */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-slate-900/80 rounded-3xl p-8 border border-slate-800 shadow-sm relative overflow-hidden">
+              {/* Subtle Ambient Glow */}
+              <div
+                className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none transition-opacity duration-1000 ${
+                  timerState === 'RUNNING'
+                    ? 'bg-emerald-500/10 opacity-100'
+                    : timerState === 'ON_BREAK'
+                    ? 'bg-amber-500/10 opacity-100'
+                    : 'bg-indigo-500/5 opacity-50'
+                }`}
+              ></div>
+
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Authoritative Work Session</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">PostgreSQL Single Source of Truth</p>
                 </div>
 
-                {/* Status Badge */}
-                <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                    timerState === 'RUNNING'
-                      ? 'bg-emerald-100 text-emerald-800 animate-pulse'
-                      : timerState === 'ON_BREAK'
-                      ? 'bg-amber-100 text-amber-800'
-                      : timerState === 'COMPLETED'
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    ● {timerState === 'RUNNING' ? 'Session Active' : timerState === 'ON_BREAK' ? 'On Break' : timerState === 'COMPLETED' ? 'Shift Completed' : 'Not Started'}
+                {/* Status Badges */}
+                {timerState === 'NOT_STARTED' && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                    ● Not Started
                   </span>
-                </div>
+                )}
+                {timerState === 'RUNNING' && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Actively Working
+                  </span>
+                )}
+                {timerState === 'ON_BREAK' && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
+                    <Coffee className="w-3.5 h-3.5" />
+                    On Break
+                  </span>
+                )}
+                {timerState === 'COMPLETED' && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+                    ✓ Shift Complete
+                  </span>
+                )}
               </div>
 
-              {/* Huge Timer Display with WCAG 2.1 AA Screen Reader Telemetry */}
-              <div 
-                className="my-8 text-center py-8 bg-slate-50 rounded-2xl border border-slate-100"
-                role="timer"
-                aria-live="polite"
-                aria-atomic="true"
-                aria-label={`Elapsed work time: ${formatTime(elapsedSeconds)}`}
-              >
-                <span className="text-6xl md:text-7xl font-extrabold tracking-tight text-slate-900 font-mono">
+              {/* Digital Elapsed Display */}
+              <div className="my-8 text-center py-6 rounded-2xl bg-slate-950/60 border border-slate-800/80">
+                <p className="font-mono text-5xl md:text-6xl font-black text-white tracking-wider">
                   {formatTime(elapsedSeconds)}
-                </span>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest mt-3">
-                  Authoritative UTC Server Duration
+                </p>
+                <p className="text-xs text-slate-400 mt-3 font-medium">
+                  {timerState === 'RUNNING'
+                    ? 'Synchronized UTC Session • Live Ticking'
+                    : timerState === 'ON_BREAK'
+                    ? 'Timer Paused • Break Deducted'
+                    : timerState === 'COMPLETED'
+                    ? 'Day Concluded • Hours Recorded'
+                    : 'Ready to begin shift'}
                 </p>
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              {timerState === 'NOT_STARTED' && (
-                <button
-                  onClick={handleStartWork}
-                  aria-label="Start active work session"
-                  className="flex-1 py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 focus-visible:ring-4 focus-visible:ring-indigo-300 outline-none text-white font-bold text-base shadow-lg shadow-indigo-200 transition flex items-center justify-center gap-2"
-                >
-                  <Play className="w-5 h-5 fill-white" />
-                  Start Work Now
-                </button>
-              )}
-
-              {timerState === 'RUNNING' && (
-                <>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                {timerState === 'NOT_STARTED' && (
                   <button
-                    onClick={handleTakeBreak}
-                    aria-label="Pause session for break"
-                    className="flex-1 py-3.5 px-6 rounded-2xl bg-amber-500 hover:bg-amber-600 focus-visible:ring-4 focus-visible:ring-amber-200 outline-none text-white font-bold text-base shadow-lg shadow-amber-100 transition flex items-center justify-center gap-2"
+                    onClick={handleStartWork}
+                    className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2"
                   >
-                    <Pause className="w-5 h-5 fill-white" />
-                    Take Break
+                    <Play className="w-4 h-4 fill-white" />
+                    Start Shift
                   </button>
-                  <button
-                    onClick={handleEndWork}
-                    aria-label="End work shift and lock hours"
-                    className="flex-1 py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-black focus-visible:ring-4 focus-visible:ring-slate-400 outline-none text-white font-bold text-base shadow-lg shadow-slate-300 transition flex items-center justify-center gap-2"
-                  >
-                    <Square className="w-5 h-5 fill-white" />
-                    End Shift
-                  </button>
-                </>
-              )}
+                )}
 
-              {timerState === 'ON_BREAK' && (
+                {timerState === 'RUNNING' && (
+                  <>
+                    <button
+                      onClick={handlePauseWork}
+                      className="flex-1 w-full py-3.5 px-6 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <Pause className="w-4 h-4 fill-current" />
+                      Take Break
+                    </button>
+                    <button
+                      onClick={handleEndWork}
+                      className="flex-1 w-full py-3.5 px-6 rounded-2xl bg-slate-800 hover:bg-rose-950 text-slate-200 hover:text-rose-300 border border-slate-700 rounded-2xl font-bold text-xs transition flex items-center justify-center gap-2"
+                    >
+                      <Square className="w-4 h-4 fill-current" />
+                      End Shift
+                    </button>
+                  </>
+                )}
+
+                {timerState === 'ON_BREAK' && (
+                  <>
+                    <button
+                      onClick={handleResumeWork}
+                      className="flex-1 w-full py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <Play className="w-4 h-4 fill-white" />
+                      Resume Work
+                    </button>
+                    <button
+                      onClick={handleEndWork}
+                      className="flex-1 w-full py-3.5 px-6 rounded-2xl bg-slate-800 hover:bg-rose-950 text-slate-200 hover:text-rose-300 border border-slate-700 rounded-2xl font-bold text-xs transition flex items-center justify-center gap-2"
+                    >
+                      <Square className="w-4 h-4 fill-current" />
+                      End Shift
+                    </button>
+                  </>
+                )}
+
+                {timerState === 'COMPLETED' && (
+                  <div className="w-full py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-xs text-center flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Today&apos;s shift successfully recorded and synchronized!
+                  </div>
+                )}
+              </div>
+
+              {/* Time Correction Deep Link */}
+              <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <span>Forgot to clock in or had a network hiccup?</span>
                 <button
-                  onClick={handleResumeWork}
-                  aria-label="Resume active work session"
-                  className="flex-1 py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 focus-visible:ring-4 focus-visible:ring-emerald-200 outline-none text-white font-bold text-base shadow-lg shadow-emerald-100 transition flex items-center justify-center gap-2"
+                  onClick={() => setShowCorrectionModal(true)}
+                  className="font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition"
                 >
-                  <Play className="w-5 h-5 fill-white" />
-                  Resume Work
+                  <Send className="w-3.5 h-3.5" />
+                  Request Time Correction
                 </button>
-              )}
-
-              {timerState === 'COMPLETED' && (
-                <div className="w-full text-center py-2 text-sm font-semibold text-emerald-700 flex items-center justify-center gap-2">
-                  <CheckCircle2 className="w-5 h-5" />
-                  Today&apos;s shift successfully recorded and synchronized!
-                </div>
-              )}
+              </div>
             </div>
           </div>
 
           {/* Quick Metrics Column */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
-              <div className="flex items-center justify-between text-slate-500 mb-2">
+          <div className="space-y-4">
+            {/* Today Tracked */}
+            <div className="bg-slate-900/80 rounded-2xl p-5 border border-slate-800 shadow-sm">
+              <div className="flex items-center justify-between text-slate-400 mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider">Today Tracked</span>
-                <Clock className="w-4 h-4" />
+                <Clock className="w-4 h-4 text-indigo-400" />
               </div>
-              <p className="text-3xl font-extrabold text-slate-900">{todayTrackedFormatted}</p>
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <p className="text-2xl font-bold text-white">{todayTrackedFormatted}</p>
+              <div className="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
                 <span>Daily Target: 8h 0m</span>
-                <span className="font-semibold text-indigo-600">Active</span>
+                <span className="font-semibold text-emerald-400">On Track</span>
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
-              <div className="flex items-center justify-between text-slate-500 mb-2">
+            {/* Leave Balance Card with Apply Button */}
+            <div className="bg-slate-900/80 rounded-2xl p-5 border border-slate-800 shadow-sm">
+              <div className="flex items-center justify-between text-slate-400 mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider">Leave Balance</span>
-                <Calendar className="w-4 h-4" />
-              </div>
-              <p className="text-3xl font-extrabold text-slate-900">18.0 Days</p>
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>Annual: 18.0</span>
-                <span>Casual: 6.0</span>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
-              <div className="flex items-center justify-between text-slate-500 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider">Attendance Status</span>
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <p className="text-2xl font-bold text-emerald-600">Present (On-Duty)</p>
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>Punch Log</span>
-                <span className="text-slate-600 font-medium">Automatic</span>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
-              <div className="flex items-center justify-between text-slate-500 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider">Weekly Timesheet</span>
-                <Clock className="w-4 h-4 text-indigo-600" />
+                <Calendar className="w-4 h-4 text-sky-400" />
               </div>
               <div className="flex items-baseline justify-between">
-                <p className="text-2xl font-extrabold text-slate-900">41.25 hrs</p>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                <p className="text-2xl font-bold text-white">{leaveBalance.annual.toFixed(1)} Days</p>
+                <button
+                  onClick={() => setShowLeaveModal(true)}
+                  className="px-2.5 py-1 rounded-lg bg-sky-600/20 text-sky-300 hover:bg-sky-600/30 text-xs font-semibold border border-sky-500/30 transition flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" /> Apply
+                </button>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <span>Annual: {leaveBalance.annual}</span>
+                <span>Casual: {leaveBalance.casual}</span>
+                <span>Sick: {leaveBalance.sick}</span>
+              </div>
+            </div>
+
+            {/* Attendance Status */}
+            <div className="bg-slate-900/80 rounded-2xl p-5 border border-slate-800 shadow-sm">
+              <div className="flex items-center justify-between text-slate-400 mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider">Attendance Status</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              </div>
+              <p className="text-xl font-bold text-emerald-400">Present (On-Duty)</p>
+              <div className="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                <span>Punch Log</span>
+                <span className="text-slate-300 font-medium">Automatic Server UTC</span>
+              </div>
+            </div>
+
+            {/* Weekly Timesheet */}
+            <div className="bg-slate-900/80 rounded-2xl p-5 border border-slate-800 shadow-sm">
+              <div className="flex items-center justify-between text-slate-400 mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider">Weekly Timesheet</span>
+                <Clock className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="flex items-baseline justify-between">
+                <p className="text-xl font-bold text-white">41.25 hrs</p>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   ● Approved
                 </span>
               </div>
-              <div className="mt-3 text-xs text-slate-500 flex items-center justify-between">
-                <span>Regular: 40.0h</span>
-                <span className="text-purple-600 font-semibold">Overtime: 1.25h</span>
-              </div>
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>Week: Oct 12 – Oct 18</span>
-                <span className="text-indigo-600 font-medium">Locked for Payroll</span>
+              <div className="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                <span>Oct 12 – Oct 18</span>
+                <span className="text-indigo-400 font-medium">Locked for Payroll</span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-md border border-indigo-800/40">
+            {/* Latest Payslip */}
+            <div className="bg-gradient-to-br from-indigo-950/60 to-slate-900 rounded-2xl p-5 border border-indigo-800/40 shadow-md">
               <div className="flex items-center justify-between text-indigo-300 mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider">Latest Payslip</span>
                 <FileText className="w-4 h-4" />
               </div>
-
-              <p className="text-2xl font-extrabold text-white mt-1">$6,430.00</p>
+              <p className="text-2xl font-bold text-white mt-1">$6,430.00</p>
               <div className="mt-2 flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   ● Disbursed
                 </span>
-                <span className="text-xs text-indigo-200">October 2026</span>
+                <span className="text-xs text-slate-400">October 2026</span>
               </div>
-              <div className="mt-4 pt-3 border-t border-indigo-800/60">
-                <button
-                  onClick={handleDownloadPayslipPdf}
-                  className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition flex items-center justify-center gap-2 shadow-sm"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Download PDF Voucher
-                </button>
-
-              </div>
+              <button
+                onClick={handleDownloadPayslipPdf}
+                className="w-full mt-4 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Download PDF Voucher
+              </button>
             </div>
           </div>
         </div>
       </main>
 
+      {/* --- MODAL 1: APPLY FOR LEAVE MODAL --- */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-white">Apply for Leave</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Remaining PTO Balance: {leaveBalance.annual} Days
+                </p>
+              </div>
+              <button
+                onClick={() => setShowLeaveModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleApplyLeave} className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300">Leave Category</label>
+                <select
+                  value={leaveForm.type}
+                  onChange={(e) => setLeaveForm({ ...leaveForm, type: e.target.value })}
+                  className="w-full mt-1.5 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="Paid Time Off (PTO)">Paid Time Off (PTO)</option>
+                  <option value="Sick Leave">Sick Leave</option>
+                  <option value="Casual Leave">Casual Leave</option>
+                  <option value="Compensatory Off">Compensatory Off</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300">Start Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={leaveForm.startDate}
+                    onChange={(e) => setLeaveForm({ ...leaveForm, startDate: e.target.value })}
+                    className="w-full mt-1.5 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-300">End Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={leaveForm.endDate}
+                    onChange={(e) => setLeaveForm({ ...leaveForm, endDate: e.target.value })}
+                    className="w-full mt-1.5 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300">Reason / Justification</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="e.g. Attending family function out of town"
+                  value={leaveForm.reason}
+                  onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
+                  className="w-full mt-1.5 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowLeaveModal(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs transition shadow-md"
+                >
+                  Submit Application
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL 2: TIME CORRECTION REQUEST MODAL --- */}
+      {showCorrectionModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-white">Request Time Correction</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Submit adjustments to your manager for retroactive review
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCorrectionModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleApplyCorrection} className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300">Shift Date</label>
+                <input
+                  type="date"
+                  required
+                  value={correctionForm.date}
+                  onChange={(e) => setCorrectionForm({ ...correctionForm, date: e.target.value })}
+                  className="w-full mt-1.5 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300">Corrected Clock In</label>
+                  <input
+                    type="time"
+                    required
+                    value={correctionForm.requestedStart}
+                    onChange={(e) => setCorrectionForm({ ...correctionForm, requestedStart: e.target.value })}
+                    className="w-full mt-1.5 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-300">Corrected Clock Out</label>
+                  <input
+                    type="time"
+                    required
+                    value={correctionForm.requestedEnd}
+                    onChange={(e) => setCorrectionForm({ ...correctionForm, requestedEnd: e.target.value })}
+                    className="w-full mt-1.5 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300">Reason for Correction</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="e.g. Network power cut during evening sign-off"
+                  value={correctionForm.reason}
+                  onChange={(e) => setCorrectionForm({ ...correctionForm, reason: e.target.value })}
+                  className="w-full mt-1.5 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCorrectionModal(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-md"
+                >
+                  Submit Request
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,6 +9,8 @@ export const registerOrgSchema = z.object({
     adminEmail: z.string().email('Invalid email address'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     timeZone: z.string().optional(),
+    organizationScale: z.enum(['micro', 'growing', 'enterprise']).optional(),
+    enabledModules: z.record(z.boolean()).optional(),
   }),
 });
 
